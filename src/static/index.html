@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayCore - Payroll System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Epilogue:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="login-screen" class="screen active">
+    <div class="login-split">
+        <div class="login-left">
+            <div class="login-logo">
+                <div class="logo-box">P</div>
+                <span>PayCore</span>
+            </div>
+            <div class="login-tagline">
+                <h1>Payroll that feels <em>boardroom ready.</em></h1>
+                <p>Secure payroll operations, employee self-service, approvals, reporting, analytics, and complaint resolution in one project-ready platform.</p>
+            </div>
+        </div>
+        <div class="login-right">
+            <div class="login-box">
+                <h2>Welcome back</h2>
+                <p class="login-sub">Sign in to the payroll workspace</p>
+                <div class="pill-row">
+                    <span class="pill pill-admin">Admin Operations</span>
+                    <span class="pill pill-employee">Employee Self Service</span>
+                </div>
+                <div id="error-box" class="error-box hidden">
+                    <span id="error-text">Invalid credentials.</span>
+                </div>
+                <div class="field">
+                    <label>Username</label>
+                    <input type="text" id="username" placeholder="Enter username" autocomplete="username">
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <div class="inline-actions">
+                        <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+                        <button type="button" id="toggle-password-btn" class="btn-ghost" onclick="togglePassword()">Show</button>
+                    </div>
+                </div>
+                <button class="btn-primary full-width" id="login-btn" onclick="handleLogin()">
+                    <span id="btn-label">Sign In</span>
+                    <div id="btn-spinner" class="spinner hidden"></div>
+                </button>
+                <p class="login-hint">Default admin login: <code>admin</code> / <code>admin123</code></p>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="admin-screen" class="screen hidden">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-box">P</div>
+                <span>PayCore</span>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-target="sec-overview" onclick="switchSection(this, 'admin-screen')">Overview</button>
+                <button class="nav-btn" data-target="sec-employees" onclick="switchSection(this, 'admin-screen')">Employees</button>
+                <button class="nav-btn" data-target="sec-add-employee" onclick="switchSection(this, 'admin-screen')">Add Employee</button>
+                <button class="nav-btn" data-target="sec-employee-profile" onclick="switchSection(this, 'admin-screen')">Employee Profile</button>
+                <button class="nav-btn" data-target="sec-payroll" onclick="switchSection(this, 'admin-screen')">Run Payroll</button>
+                <button class="nav-btn" data-target="sec-payroll-history" onclick="switchSection(this, 'admin-screen')">Payroll History</button>
+                <button class="nav-btn" data-target="sec-adjustments" onclick="switchSection(this, 'admin-screen')">Adjustments</button>
+                <button class="nav-btn" data-target="sec-complaints" onclick="switchSection(this, 'admin-screen')">Complaints</button>
+                <button class="nav-btn" data-target="sec-analytics" onclick="switchSection(this, 'admin-screen')">Analytics</button>
+                <button class="nav-btn" data-target="sec-exports" onclick="switchSection(this, 'admin-screen')">Exports</button>
+                <button class="nav-btn" data-target="sec-admins" onclick="switchSection(this, 'admin-screen')">Admins</button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-pill">
+                    <div class="user-avi" id="admin-avi">A</div>
+                    <div class="user-meta">
+                        <span id="admin-name-display">Admin</span>
+                        <small>Administrator</small>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Exit</button>
+            </div>
+        </aside>
+        <main class="main-area">
+            <section id="sec-overview" class="content-section active">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Overview</h2></div>
+                    <span class="badge badge-admin">Secure Session Active</span>
+                </div>
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-data"><span class="kpi-label">Employees</span><span class="kpi-val" id="kpi-emp-count">0</span></div></div>
+                    <div class="kpi-card"><div class="kpi-data"><span class="kpi-label">Latest Cycle</span><span class="kpi-val sm-val" id="kpi-period">Awaiting run</span></div></div>
+                    <div class="kpi-card"><div class="kpi-data"><span class="kpi-label">Latest Payslips</span><span class="kpi-val" id="kpi-slip-count">0</span></div></div>
+                </div>
+                <div class="inline-grid stats-grid" style="margin-bottom:24px;">
+                    <div class="mini-card"><small>Pending Adjustments</small><strong id="overview-pending-adjustments">0</strong></div>
+                    <div class="mini-card"><small>Open Complaints</small><strong id="overview-open-complaints">0</strong></div>
+                    <div class="mini-card"><small>Protected Modules</small><strong>Admin Only</strong></div>
+                </div>
+                <div class="panel-row">
+                    <div class="panel">
+                        <div class="panel-head"><h3>System Status</h3></div>
+                        <div class="status-list">
+                            <div class="status-row"><span class="dot dot-green"></span><span>Session Handling</span><span class="status-ok">Active</span></div>
+                            <div class="status-row"><span class="dot dot-green"></span><span>Role-Based Route Protection</span><span class="status-ok">Protected</span></div>
+                            <div class="status-row"><span class="dot dot-green"></span><span>Payroll Engine</span><span class="status-ok">Live</span></div>
+                            <div class="status-row"><span class="dot dot-green"></span><span>Analytics and Export Bundle</span><span class="status-ok">Ready</span></div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-head"><h3>Quick Actions</h3></div>
+                        <div class="quick-actions">
+                            <button class="qa-btn" onclick="jumpToSection('sec-add-employee', 'admin-screen')">Onboard Employee</button>
+                            <button class="qa-btn" onclick="jumpToSection('sec-payroll', 'admin-screen')">Run Payroll</button>
+                            <button class="qa-btn" onclick="jumpToSection('sec-adjustments', 'admin-screen')">Review Adjustments</button>
+                            <button class="qa-btn" onclick="jumpToSection('sec-exports', 'admin-screen')">Download Reports</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="sec-employees" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Employees</h2></div>
+                    <button class="btn-primary btn-sm" onclick="jumpToSection('sec-add-employee', 'admin-screen')">Add Employee</button>
+                </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Employee Records</h3>
+                        <div class="field compact-field"><input type="text" id="employee-search-input" placeholder="Search name, department, designation, status"></div>
+                    </div>
+                    <div id="employees-table-wrap" class="placeholder-state"><p>No employee records yet.</p></div>
+                </div>
+            </section>
+            <section id="sec-add-employee" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Add Employee</h2></div>
+                    <span class="badge badge-admin">Onboarding</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Create Payroll Account</h3></div>
+                    <div class="form-grid">
+                        <div class="field"><label>Full Name</label><input type="text" id="page-new-name" placeholder="Employee full name"></div>
+                        <div class="field"><label>Department</label><input type="text" id="page-new-dept" placeholder="Department"></div>
+                        <div class="field"><label>Designation</label><input type="text" id="page-new-desig" placeholder="Designation"></div>
+                        <div class="field"><label>Base Salary</label><input type="number" id="page-new-salary" placeholder="50000"></div>
+                        <div class="field"><label>Username</label><input type="text" id="page-new-user" placeholder="Login username"></div>
+                        <div class="field"><label>Temporary Password</label><input type="password" id="page-new-pass" placeholder="Temporary password"></div>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn-primary" onclick="saveEmployeeFromPage()">Create Employee</button>
+                        <span id="employee-form-status" class="status-inline">Payroll-ready employee onboarding.</span>
+                    </div>
+                </div>
+            </section>
+            <section id="sec-employee-profile" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Employee Profile</h2></div>
+                    <span class="badge badge-admin">Revision History</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Profile Editor</h3>
+                        <div class="field compact-field"><select id="admin-profile-select"></select></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field"><label>Full Name</label><input type="text" id="admin-profile-name"></div>
+                        <div class="field"><label>Username</label><input type="text" id="admin-profile-username" disabled></div>
+                        <div class="field"><label>Department</label><input type="text" id="admin-profile-department"></div>
+                        <div class="field"><label>Designation</label><input type="text" id="admin-profile-designation"></div>
+                        <div class="field"><label>Base Salary</label><input type="number" id="admin-profile-salary"></div>
+                        <div class="field"><label>Status</label><select id="admin-profile-status"><option>Active</option><option>On Hold</option><option>Inactive</option></select></div>
+                        <div class="field"><label>Bank Account</label><input type="text" id="admin-profile-bank"></div>
+                        <div class="field"><label>Email</label><input type="email" id="admin-profile-email"></div>
+                        <div class="field"><label>Phone</label><input type="text" id="admin-profile-phone"></div>
+                        <div class="field"><label>Joining Date</label><input type="date" id="admin-profile-joining-date"></div>
+                        <div class="field span-2"><label>Address</label><input type="text" id="admin-profile-address"></div>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn-primary" onclick="saveAdminEmployeeProfile()">Save Employee Profile</button>
+                        <span id="admin-profile-status-text" class="status-inline">Select an employee to load profile details.</span>
+                    </div>
+                </div>
+                <div class="panel" style="margin-top:16px;">
+                    <div class="panel-head"><h3>Revision History</h3></div>
+                    <div id="admin-profile-revision-list" class="placeholder-state"><p>No profile selected yet.</p></div>
+                </div>
+            </section>
+            <section id="sec-payroll" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Run Payroll</h2></div>
+                    <span class="badge badge-admin">Payroll Engine</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Payroll Processing</h3></div>
+                    <div class="dual-panel">
+                        <div class="stack-column">
+                            <div class="field"><label>Pay Period</label><input type="text" id="payroll-month-input" placeholder="April 2026 or 2026-04"></div>
+                            <button class="btn-primary" onclick="runPayroll()">Process Payroll</button>
+                            <small class="muted-note">Approved adjustments and loss-of-pay deductions are folded into the payroll run automatically.</small>
+                        </div>
+                        <div class="console-card">
+                            <small>Payroll Console</small>
+                            <h3>Ready for processing</h3>
+                            <div class="inline-grid stats-grid">
+                                <div class="mini-card"><small>Employees</small><strong id="payroll-generated-count">0</strong></div>
+                                <div class="mini-card"><small>Gross</small><strong id="payroll-gross-total">Rs. 0.00</strong></div>
+                                <div class="mini-card"><small>Deductions</small><strong id="payroll-deduction-total">Rs. 0.00</strong></div>
+                                <div class="mini-card"><small>Net</small><strong id="payroll-net-total">Rs. 0.00</strong></div>
+                            </div>
+                            <p id="payroll-run-message" class="status-inline">No payroll has been processed in this session yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="sec-payroll-history" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Payroll History</h2></div>
+                    <span class="badge badge-admin">Reports</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Processed Cycles</h3></div>
+                    <div id="payroll-history-wrap" class="placeholder-state"><p>No payroll cycles recorded yet.</p></div>
+                </div>
+            </section>
+            <section id="sec-adjustments" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Payroll Adjustments</h2></div>
+                    <span class="badge badge-admin">Approval Workflow</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Submit Adjustment</h3></div>
+                    <div class="form-grid">
+                        <div class="field"><label>Employee</label><select id="adjustment-employee-select"></select></div>
+                        <div class="field"><label>Pay Period</label><input type="text" id="adjustment-month" placeholder="April 2026"></div>
+                        <div class="field"><label>Type</label><select id="adjustment-type"><option value="EARNING">Bonus / Incentive</option><option value="DEDUCTION">Deduction / Penalty</option></select></div>
+                        <div class="field"><label>Amount</label><input type="number" id="adjustment-amount" placeholder="2500"></div>
+                        <div class="field span-2"><label>Reason</label><input type="text" id="adjustment-reason" placeholder="Performance incentive or payroll correction"></div>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn-primary" onclick="saveAdjustment()">Submit Adjustment</button>
+                        <span id="adjustment-status" class="status-inline">Submitted adjustments stay pending until approved.</span>
+                    </div>
+                </div>
+                <div class="panel" style="margin-top:16px;">
+                    <div class="panel-head"><h3>Pending Approval Queue</h3></div>
+                    <div id="adjustment-approval-list" class="placeholder-state"><p>No pending approvals.</p></div>
+                    <p id="adjustment-approval-status" class="status-inline" style="margin-top:14px;">Approvals and rejections are tracked with admin notes.</p>
+                </div>
+                <div class="panel" style="margin-top:16px;">
+                    <div class="panel-head"><h3>Adjustment Register</h3></div>
+                    <div id="adjustment-list" class="placeholder-state"><p>No payroll adjustments yet.</p></div>
+                </div>
+            </section>
+            <section id="sec-complaints" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Complaint Resolution</h2></div>
+                    <span class="badge badge-admin">Payroll Issues</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Employee Complaint Inbox</h3></div>
+                    <div id="complaint-list" class="placeholder-state"><p>No payroll complaints submitted.</p></div>
+                    <p id="complaint-status" class="status-inline" style="margin-top:14px;">Replies are written back to the employee portal.</p>
+                </div>
+            </section>
+            <section id="sec-analytics" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Department Analytics</h2></div>
+                    <span class="badge badge-admin">Analytics</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Department Wise Payroll</h3>
+                        <div class="inline-actions">
+                            <input type="text" id="analytics-month-input" placeholder="Optional month filter">
+                            <button class="btn-ghost btn-sm" onclick="fetchDepartmentAnalytics()">Refresh</button>
+                        </div>
+                    </div>
+                    <p class="status-inline">Showing: <span id="analytics-period-label">All Periods</span></p>
+                    <div id="analytics-summary" style="margin:18px 0;"></div>
+                    <div id="analytics-chart" class="placeholder-state"><p>No department payroll data yet.</p></div>
+                </div>
+            </section>
+            <section id="sec-exports" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Export Bundle</h2></div>
+                    <span class="badge badge-admin">CSV Reports</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Company Wide Report Exports</h3></div>
+                    <div class="inline-actions" style="margin-bottom:16px;">
+                        <input type="text" id="export-payroll-month" placeholder="Optional payroll month for register export">
+                    </div>
+                    <div class="quick-actions">
+                        <button class="qa-btn" onclick="downloadExport('payroll')">Payroll Register CSV</button>
+                        <button class="qa-btn" onclick="downloadExport('employees')">Employee Master CSV</button>
+                        <button class="qa-btn" onclick="downloadExport('monthly')">Monthly Summary CSV</button>
+                        <button class="qa-btn" onclick="downloadExport('quarterly')">Quarterly Summary CSV</button>
+                        <button class="qa-btn" onclick="downloadExport('yearly')">Yearly Summary CSV</button>
+                    </div>
+                    <p id="export-status" class="status-inline" style="margin-top:16px;">Download payroll reports for audit, review, and presentations.</p>
+                </div>
+            </section>
+            <section id="sec-admins" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Admin Workspace</p><h2>Admin Management</h2></div>
+                    <span class="badge badge-admin">Multi-Admin</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Create Admin Account</h3></div>
+                    <div class="form-grid">
+                        <div class="field"><label>Admin Username</label><input type="text" id="admin-username" placeholder="payrolllead"></div>
+                        <div class="field"><label>Admin Password</label><input type="password" id="admin-password" placeholder="Temporary password"></div>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn-primary" onclick="saveAdmin()">Create Admin</button>
+                        <span id="admin-status" class="status-inline">Use this to add more administrators.</span>
+                    </div>
+                </div>
+                <div class="panel" style="margin-top:16px;">
+                    <div class="panel-head"><h3>Current Admin Accounts</h3></div>
+                    <div id="admin-list" class="placeholder-state"><p>No admin accounts found.</p></div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<div id="employee-screen" class="screen hidden">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-box logo-emp">P</div>
+                <span>PayCore</span>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-target="emp-sec-home" onclick="switchSection(this, 'employee-screen')">Dashboard</button>
+                <button class="nav-btn" data-target="emp-sec-profile" onclick="switchSection(this, 'employee-screen')">My Profile</button>
+                <button class="nav-btn" data-target="emp-sec-payslips" onclick="switchSection(this, 'employee-screen')">My Payslips</button>
+                <button class="nav-btn" data-target="emp-sec-complaints" onclick="switchSection(this, 'employee-screen')">Payroll Complaints</button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-pill">
+                    <div class="user-avi user-avi-emp" id="emp-avi">E</div>
+                    <div class="user-meta">
+                        <span id="emp-name-display">Employee</span>
+                        <small>Employee</small>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Exit</button>
+            </div>
+        </aside>
+        <main class="main-area">
+            <section id="emp-sec-home" class="content-section active">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Employee Portal</p><h2>Welcome, <span id="emp-welcome">Employee</span></h2></div>
+                    <span class="badge badge-emp">Employee Session</span>
+                </div>
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-data"><span class="kpi-label">Latest Payslip</span><span class="kpi-val sm-val" id="emp-latest-period">Awaiting payroll</span></div></div>
+                    <div class="kpi-card"><div class="kpi-data"><span class="kpi-label">Payslips</span><span class="kpi-val" id="emp-payslip-count">0</span></div></div>
+                    <div class="kpi-card"><div class="kpi-data"><span class="kpi-label">Open Complaints</span><span class="kpi-val" id="emp-open-complaints">0</span></div></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Portal Features</h3></div>
+                    <div class="status-list">
+                        <div class="status-row"><span class="dot dot-green"></span><span>Protected employee session</span><span class="status-ok">Enabled</span></div>
+                        <div class="status-row"><span class="dot dot-green"></span><span>Payslip PDF export</span><span class="status-ok">Enabled</span></div>
+                        <div class="status-row"><span class="dot dot-green"></span><span>Profile updates with revision history</span><span class="status-ok">Enabled</span></div>
+                        <div class="status-row"><span class="dot dot-green"></span><span>Complaint escalation to admin</span><span class="status-ok">Enabled</span></div>
+                    </div>
+                </div>
+            </section>
+            <section id="emp-sec-profile" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Employee Portal</p><h2>My Profile</h2></div>
+                    <span class="badge badge-emp">Self Service</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Contact and Bank Details</h3></div>
+                    <div class="form-grid">
+                        <div class="field"><label>Full Name</label><input type="text" id="emp-profile-name" disabled></div>
+                        <div class="field"><label>Username</label><input type="text" id="emp-profile-username" disabled></div>
+                        <div class="field"><label>Department</label><input type="text" id="emp-profile-department" disabled></div>
+                        <div class="field"><label>Designation</label><input type="text" id="emp-profile-designation" disabled></div>
+                        <div class="field"><label>Base Salary</label><input type="text" id="emp-profile-salary" disabled></div>
+                        <div class="field"><label>Status</label><input type="text" id="emp-profile-status" disabled></div>
+                        <div class="field"><label>Bank Account</label><input type="text" id="emp-profile-bank"></div>
+                        <div class="field"><label>Email</label><input type="email" id="emp-profile-email"></div>
+                        <div class="field"><label>Phone</label><input type="text" id="emp-profile-phone"></div>
+                        <div class="field"><label>Joining Date</label><input type="text" id="emp-profile-joining-date" disabled></div>
+                        <div class="field span-2"><label>Address</label><input type="text" id="emp-profile-address"></div>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn-primary" onclick="saveOwnProfile()">Save My Details</button>
+                        <span id="emp-profile-status-text" class="status-inline">Only contact and bank details are editable here.</span>
+                    </div>
+                </div>
+                <div class="panel" style="margin-top:16px;">
+                    <div class="panel-head"><h3>Revision History</h3></div>
+                    <div id="emp-profile-revision-list" class="placeholder-state"><p>No revisions yet.</p></div>
+                </div>
+            </section>
+            <section id="emp-sec-payslips" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Employee Portal</p><h2>My Payslips</h2></div>
+                    <span class="badge badge-emp">Payroll Records</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Payslip Archive</h3></div>
+                    <div id="emp-payslip-list" class="placeholder-state"><p>No payslips available yet.</p></div>
+                </div>
+            </section>
+            <section id="emp-sec-complaints" class="content-section hidden">
+                <div class="section-header">
+                    <div><p class="breadcrumb">Employee Portal</p><h2>Payroll Complaints</h2></div>
+                    <span class="badge badge-emp">Issue Escalation</span>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Raise Payroll Issue</h3></div>
+                    <div class="form-grid">
+                        <div class="field"><label>Pay Period</label><input type="text" id="emp-complaint-month" placeholder="Optional month"></div>
+                        <div class="field"><label>Subject</label><input type="text" id="emp-complaint-subject" placeholder="Short issue title"></div>
+                        <div class="field span-2"><label>Issue Description</label><input type="text" id="emp-complaint-message" placeholder="Explain the payroll discrepancy or request"></div>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn-primary" onclick="createComplaint()">Submit Complaint</button>
+                        <span id="emp-complaint-status" class="status-inline">Issues route directly to payroll admins.</span>
+                    </div>
+                </div>
+                <div class="panel" style="margin-top:16px;">
+                    <div class="panel-head"><h3>Complaint History</h3></div>
+                    <div id="emp-complaint-list" class="placeholder-state"><p>No payroll complaints raised yet.</p></div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<script src="app.js"></script>
+<script src="payroll-upgrade.js"></script>
+</body>
+</html>
